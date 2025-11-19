@@ -3,10 +3,10 @@ kind: Long
 metadata:
   name: node-template
 spec:
-  name: node模版
-  description: 模版说明
-  price: 100
-  plat: 0
+  name: 三三制微教学
+  description: 全包
+  price: 30
+  plat: 174
   host: node-template-chake
 ---
 apiVersion: autoscaling/v2
