@@ -1,0 +1,19 @@
+# To get started with Dependabot version updates, you'll need to specify which
+# package ecosystems to update and where the package manifests are located.
+# Please see the documentation for all configuration options:
+# https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+
+version: 2
+registries:
+  npm-npmjs:
+    type: npm-registry
+    url: https://packages.aliyun.com/64d24048bebb3e7debf55197/npm/npm-registry/
+    username: "64d2404072edbfa0595ed2b0"
+    password: ${{secrets.MY_NPM_PASSWORD}}
+updates:
+  - package-ecosystem: "npm" # See documentation for possible values
+    directory: "/" # Location of package manifests
+    registries:
+      - npm-npmjs
+    schedule:
+      interval: "daily"

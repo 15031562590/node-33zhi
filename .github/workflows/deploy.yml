@@ -1,0 +1,8 @@
+name: Deploy Application
+on:
+  push:
+    branches:
+      - main
+jobs:
+  deploy:
+    uses: fuck-study/workflows/.github/workflows/deploy.yml@main

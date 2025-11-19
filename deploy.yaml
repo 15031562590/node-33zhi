@@ -1,0 +1,214 @@
+apiVersion: long.io/v1
+kind: Long
+metadata:
+  name: node-template
+spec:
+  name: node模版
+  description: 模版说明
+  price: 100
+  plat: 0
+  host: node-template-chake
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: node-template
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: node-template
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+    - type: Pods
+      pods:
+        metric:
+          name: sk_rate
+        target:
+          type: Value
+          averageValue: "80"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: &serviceName node-template
+spec:
+  selector:
+    matchLabels:
+      name: *serviceName
+  template:
+    metadata:
+      labels:
+        name: *serviceName
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "6000"
+        prometheus.io/path: "/metrics"
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node.type
+                    operator: In
+                    values:
+                      - node
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: *serviceName
+          image: registry.cn-shanghai.aliyuncs.com/fuck-study/node-template:latest
+          ports:
+            - containerPort: 6000
+          env:
+            - name: NAME
+              value: "node-template"
+            - name: PLAT
+              value: "plat-template"
+            - name: LONG_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: host
+            - name: LONG_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: port
+            - name: LONG_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: username
+            - name: LONG_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: password
+            - name: LONG_REDIS
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: redis
+          resources:
+            requests:
+              memory: 128Mi
+              cpu: 100m
+            limits:
+              memory: 256Mi
+              cpu: 200m
+          livenessProbe:
+            httpGet:
+              path: /api/ping
+              port: 6000
+            periodSeconds: 10
+            timeoutSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /api/ping
+              port: 6000
+            periodSeconds: 10
+            timeoutSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: &serviceName node-template-chake
+spec:
+  selector:
+    name: *serviceName
+  ports:
+    - protocol: TCP
+      port: 6000
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: &serviceName node-template-chake
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: *serviceName
+  template:
+    metadata:
+      labels:
+        name: *serviceName
+    spec:
+      tolerations:
+        - effect: NoExecute
+          key: node.kubernetes.io/unreachable
+          operator: Exists
+          tolerationSeconds: 60
+        - effect: NoExecute
+          key: node.kubernetes.io/not-ready
+          operator: Exists
+          tolerationSeconds: 60
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node.type
+                    operator: In
+                    values:
+                      - node
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: *serviceName
+          image: registry.cn-shanghai.aliyuncs.com/fuck-study/node-template:latest
+          ports:
+            - containerPort: 6000
+          env:
+            - name: PLAT
+              value: "plat-template"
+            - name: LONG_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: host
+            - name: LONG_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: port
+            - name: LONG_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: username
+            - name: LONG_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: password
+            - name: LONG_REDIS
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: redis
+          resources:
+            requests:
+              memory: 128Mi
+              cpu: 100m
+            limits:
+              memory: 256Mi
+              cpu: 200m
+          livenessProbe:
+            httpGet:
+              path: /api/ping
+              port: 6000
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 10
+          readinessProbe:
+            httpGet:
+              path: /api/ping
+              port: 6000
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 5
