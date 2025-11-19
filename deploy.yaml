@@ -5,7 +5,7 @@ metadata:
 spec:
   name: 三三制微教学
   description: 全包
-  price: 30
+  price: 20
   plat: 174
   host: node-template-chake
 ---
